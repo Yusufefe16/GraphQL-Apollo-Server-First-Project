@@ -12,7 +12,8 @@
   "type": "module",
   "dependencies": {
     "@apollo/server": "^4.9.3",
-    "graphql": "^16.8.1"
+    "graphql": "^16.8.1",
+    "graphql-yoga": "^4.0.5"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

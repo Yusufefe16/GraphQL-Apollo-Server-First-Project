@@ -1,6 +1,5 @@
-import { ApolloServer } from "@apollo/server";
-import { startStandaloneServer } from "@apollo/server/standalone";
-
+import { createServer } from "node:http";
+import { createPubSub, createSchema, createYoga } from "graphql-yoga";
 // data.json dosyasını içe aktarın
 import data from "./data.js";
 
@@ -70,12 +69,13 @@ const resolvers = {
       return data.users;
     },
     addEvent(_,args) {
-      let game = {
+      let event = {
         ...args.event,
         id: Math.floor(Math.random()*10000)
       }
-      data.events.push(game);
-      return game;
+      data.events.push(event);
+      pubSub.publish("eventCreated", event);
+      return event;
     },
     addLocations(_,args) {
       let location = {
@@ -91,6 +91,7 @@ const resolvers = {
         id: Math.floor(Math.random()*10000)
       }
       data.participants.push(participant);
+      pubSub.publish("participantAdded", participant);
       return participant;
     },
     addUsers(_,args) {
@@ -99,6 +100,7 @@ const resolvers = {
         id: Math.floor(Math.random()*10000)
       }
       data.users.push(user);
+      pubSub.publish("userCreated", user);
       return user;
     },
     updateEvent(_,args) {
@@ -165,18 +167,43 @@ const resolvers = {
         count: length,
       };
     }
+  },
+  Subscription: {
+    eventCreated: {
+      subscribe:()=>{
+        return pubSub.subscribe("eventCreated");
+      },
+      resolve:(payload)=> payload,
+    },
+    userCreated: {
+      subscribe:()=>{
+        return pubSub.subscribe("userCreated");
+      },
+      resolve:(payload)=> payload,
+    },
+    participantAdded: {
+      subscribe:()=>{
+        return pubSub.subscribe("participantAdded");
+      },
+      resolve:(payload)=> payload,
+    },
   }
 };
 //server setup
 
-const server = new ApolloServer({
-  //typeDefs
-  typeDefs,
 
-  //resolvers
-  resolvers,
+const pubSub = createPubSub();
+
+const yoga = createYoga({
+  graphqlEndpoint: "/",
+  schema: createSchema({
+    typeDefs,
+    resolvers,
+  }),
 });
 
-const { url } = await startStandaloneServer(server, { listen: { port: 4000 } });
+const server = createServer(yoga);
 
-console.log(`Server ready at ${url}`);
+server.listen(4000, () => {
+  console.info("Server is running on http://localhost:4000");
+});

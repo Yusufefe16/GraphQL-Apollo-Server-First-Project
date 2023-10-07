@@ -123,4 +123,10 @@ export const typeDefs = `#graphql
         deleteAllUsers: DeleteAllOutput!
     }
 
+    type Subscription {
+        eventCreated: Event!
+        userCreated: User!
+        participantAdded: Participant!
+    }
+
 `;
